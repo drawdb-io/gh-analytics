@@ -29,8 +29,15 @@ function parseReport(data) {
 }
 
 function saveToCsv(repoData) {
-  const header = ["repo_name", "date", "stars", "forks"];
-  const rowData = [
+  const header = [
+    "repo_name",
+    "date",
+    "stars",
+    "forks",
+    "stars_gained",
+    "forks_gained",
+  ];
+  let rowData = [
     repoData.name,
     new Date().toISOString(),
     repoData.stars,
@@ -47,6 +54,16 @@ function saveToCsv(repoData) {
 
     const rows = parseReport(existingData);
 
+    if (rows.length < 1) {
+      rowData = [...rowData, 0, 0];
+    } else {
+      rowData = [
+        ...rowData,
+        repoData.stars - rows[rows.length - 1][2],
+        repoData.forks - rows[rows.length - 1][3],
+      ];
+    }
+
     if (rows.length < YEAR) {
       if (existingData.trim() === "") {
         fs.appendFileSync(pathname, header.join(","));
@@ -62,10 +79,7 @@ function saveToCsv(repoData) {
       header.join(",") + "\n" + newRows.map((x) => x.join(",")).join("\n")
     );
   } catch (err) {
-    fs.writeFileSync(
-      pathname,
-      header.join(",") + "\n" + rowData.join(",")
-    );
+    fs.writeFileSync(pathname, header.join(",") + "\n" + rowData.join(","));
   }
 }
 
