@@ -1,7 +1,7 @@
 import { Octokit } from "octokit";
-import "dotenv/config";
-import * as csv from "csv";
 import fs from "node:fs";
+import path from "node:path";
+import "dotenv/config";
 
 const config = {
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
@@ -9,8 +9,44 @@ const config = {
 
 const ghconfig = {
   organization: "drawdb-io",
-  reportFilename: "report",
+  outputDir: "reports",
 };
+
+function ensureOutputDir() {
+  const dirPath = path.resolve(ghconfig.outputDir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+function saveToCsv(repoData) {
+  const header = ["repo_name", "date", "stars", "forks"];
+  const rowData = [
+    repoData.name,
+    new Date().toISOString(),
+    repoData.stars,
+    repoData.forks,
+  ];
+  const pathname = path.resolve(ghconfig.outputDir, `${repoData.name}.csv`);
+  try {
+    const data = fs.readFileSync(pathname, "utf8");
+
+    if (data.trim() === "") {
+      fs.appendFileSync(pathname, header.join(",") + "\n");
+    }
+
+    fs.appendFileSync(pathname, rowData.join(",") + "\n");
+
+    console.log("Report saved to CSV file.");
+  } catch (err) {
+    fs.writeFileSync(
+      pathname,
+      header.join(",") + "\n" + rowData.join(",") + "\n"
+    );
+
+    console.log("CSV file created and report saved.");
+  }
+}
 
 async function getOrganizationRepos() {
   const octokit = new Octokit({
@@ -28,23 +64,24 @@ async function getOrganizationRepos() {
       }
     );
 
-    console.log(
-      res.data
-        .filter((x) => !x.private)
-        .map((repo) => ({
+    ensureOutputDir();
+
+    res.data
+      .filter((repo) => !repo.private)
+      .forEach((repo) => {
+        const repoProj = {
           stars: repo.stargazers_count,
           forks: repo.forks_count,
-          name: repo.full_name,
-        }))
-    );
+          full_name: repo.full_name,
+          name: repo.name,
+          date: new Date().toISOString(),
+        };
+
+        saveToCsv(repoProj);
+      });
   } catch (error) {
     console.error("Error fetching repositories:", error);
   }
 }
 
-try {
-  const data = fs.readFileSync(ghconfig.reportFilename + ".csv", "utf8");
-  console.log(data);
-} catch (err) {
-  console.error(err);
-}
+await getOrganizationRepos();
