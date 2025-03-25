@@ -1,6 +1,7 @@
 import { Octokit } from "octokit";
 import fs from "node:fs";
 import path from "node:path";
+import { parseReport } from "./utils/parseReport.js";
 import "dotenv/config";
 
 const config = {
@@ -12,20 +13,13 @@ const ghconfig = {
   outputDir: "reports",
 };
 
-const YEAR = 5;
+const YEAR = 35;
 
 function ensureOutputDir() {
   const dirPath = path.resolve(ghconfig.outputDir);
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-}
-
-function parseReport(data) {
-  return data
-    .split("\n")
-    .map((x) => x.split(","))
-    .slice(1);
 }
 
 function saveToCsv(repoData) {

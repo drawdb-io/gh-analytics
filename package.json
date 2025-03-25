@@ -1,17 +1,21 @@
 {
   "name": "gh-analytics",
   "version": "0.0.0",
-  "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "reports": "node generateReports.js",
+    "charts": "node generateCharts.js",
+    "start": "npm run reports && npm run charts"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "chart.js": "^4.4.8",
+    "chartjs-node-canvas": "^5.0.0",
     "dotenv": "^16.4.7",
     "octokit": "^4.1.2"
   }
 }
+
