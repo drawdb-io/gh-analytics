@@ -12,11 +12,20 @@ const ghconfig = {
   outputDir: "reports",
 };
 
+const YEAR = 5;
+
 function ensureOutputDir() {
   const dirPath = path.resolve(ghconfig.outputDir);
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
+}
+
+function parseReport(data) {
+  return data
+    .split("\n")
+    .map((x) => x.split(","))
+    .slice(1);
 }
 
 function saveToCsv(repoData) {
@@ -28,23 +37,35 @@ function saveToCsv(repoData) {
     repoData.forks,
   ];
   const pathname = path.resolve(ghconfig.outputDir, `${repoData.name}.csv`);
-  try {
-    const data = fs.readFileSync(pathname, "utf8");
 
-    if (data.trim() === "") {
-      fs.appendFileSync(pathname, header.join(",") + "\n");
+  try {
+    let existingData = "";
+
+    if (fs.existsSync(pathname)) {
+      existingData = fs.readFileSync(pathname, "utf8");
     }
 
-    fs.appendFileSync(pathname, rowData.join(",") + "\n");
+    const rows = parseReport(existingData);
 
-    console.log("Report saved to CSV file.");
+    if (rows.length < YEAR) {
+      if (existingData.trim() === "") {
+        fs.appendFileSync(pathname, header.join(","));
+      }
+
+      fs.appendFileSync(pathname, "\n" + rowData.join(","));
+      return;
+    }
+
+    const newRows = [...rows.slice(1), rowData];
+    fs.writeFileSync(
+      pathname,
+      header.join(",") + "\n" + newRows.map((x) => x.join(",")).join("\n")
+    );
   } catch (err) {
     fs.writeFileSync(
       pathname,
-      header.join(",") + "\n" + rowData.join(",") + "\n"
+      header.join(",") + "\n" + rowData.join(",")
     );
-
-    console.log("CSV file created and report saved.");
   }
 }
 
