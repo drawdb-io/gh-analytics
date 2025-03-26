@@ -1,22 +1,12 @@
 import { Octokit } from "octokit";
 import fs from "node:fs";
 import path from "node:path";
-import { parseReport } from "./utils/parseReport.js";
+import { parseReportData } from "./utils/parseReportData.js";
+import config from "./config.js";
 import "dotenv/config";
 
-const config = {
-  GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-};
-
-const ghconfig = {
-  organization: "drawdb-io",
-  outputDir: "reports",
-};
-
-const YEAR = 35;
-
-function ensureOutputDir() {
-  const dirPath = path.resolve(ghconfig.outputDir);
+function ensurereportOutputDir() {
+  const dirPath = path.resolve(config.reportOutputDir);
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
@@ -37,7 +27,7 @@ function saveToCsv(repoData) {
     repoData.stars,
     repoData.forks,
   ];
-  const pathname = path.resolve(ghconfig.outputDir, `${repoData.name}.csv`);
+  const pathname = path.resolve(config.reportOutputDir, `${repoData.name}.csv`);
 
   try {
     let existingData = "";
@@ -46,7 +36,9 @@ function saveToCsv(repoData) {
       existingData = fs.readFileSync(pathname, "utf8");
     }
 
-    const rows = parseReport(existingData);
+    const rows = parseReportData(existingData);
+
+    console.log(rows);
 
     if (rows.length < 1) {
       rowData = [...rowData, 0, 0];
@@ -58,7 +50,7 @@ function saveToCsv(repoData) {
       ];
     }
 
-    if (rows.length < YEAR) {
+    if (rows.length < config.trackedPeriod) {
       if (existingData.trim() === "") {
         fs.appendFileSync(pathname, header.join(","));
       }
@@ -79,12 +71,12 @@ function saveToCsv(repoData) {
 
 async function getOrganizationRepos() {
   const octokit = new Octokit({
-    auth: config.GITHUB_TOKEN,
+    auth: process.env.GITHUB_TOKEN,
   });
 
   try {
     const res = await octokit.request(
-      `GET /orgs/${ghconfig.organization}/repos`,
+      `GET /orgs/${config.organization}/repos`,
       {
         org: "ORG",
         headers: {
@@ -93,7 +85,7 @@ async function getOrganizationRepos() {
       }
     );
 
-    ensureOutputDir();
+    ensurereportOutputDir();
 
     res.data
       .filter((repo) => !repo.private)

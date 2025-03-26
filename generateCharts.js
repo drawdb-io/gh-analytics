@@ -1,20 +1,13 @@
 import fs from "node:fs";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-import { parseReport } from "./utils/parseReport.js";
-import "dotenv/config";
+import { parseReportData } from "./utils/parseReportData.js";
+import config from "./config.js";
 
-const width = 960;
-const height = 600;
-const backgroundColour = "white";
-const chartJSNodeCanvas = new ChartJSNodeCanvas({
-  width,
-  height,
-  backgroundColour,
-});
+const chartJSNodeCanvas = new ChartJSNodeCanvas(config.chartSettings);
 
 async function generateCharts() {
   let existingData = fs.readFileSync("./reports/drawdb.csv", "utf8");
-  let data = parseReport(existingData);
+  let data = parseReportData(existingData);
 
   const configuration = {
     type: "bar",
