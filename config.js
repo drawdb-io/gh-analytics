@@ -1,7 +1,7 @@
 const config = {
   organization: "drawdb-io",
   reportOutputDir: "reports",
-  chartOutputDit: "charts",
+  chartOutputDir: "charts",
   trackedPeriod: 365,
   chartSettings: {
     width: 960,

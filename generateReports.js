@@ -4,13 +4,7 @@ import path from "node:path";
 import { parseReportData } from "./utils/parseReportData.js";
 import config from "./config.js";
 import "dotenv/config";
-
-function ensurereportOutputDir() {
-  const dirPath = path.resolve(config.reportOutputDir);
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-}
+import { ensureDirectory } from "./utils/ensureDirectory.js";
 
 function saveToCsv(repoData) {
   const header = [
@@ -36,9 +30,7 @@ function saveToCsv(repoData) {
       existingData = fs.readFileSync(pathname, "utf8");
     }
 
-    const rows = parseReportData(existingData);
-
-    console.log(rows);
+    const { data: rows } = parseReportData(existingData);
 
     if (rows.length < 1) {
       rowData = [...rowData, 0, 0];
@@ -85,7 +77,7 @@ async function getOrganizationRepos() {
       }
     );
 
-    ensurereportOutputDir();
+    ensureDirectory(config.reportOutputDir);
 
     res.data
       .filter((repo) => !repo.private)
